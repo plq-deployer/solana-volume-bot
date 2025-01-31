@@ -57,5 +57,4 @@ npm run gather
 
 # Author
 
-### Telegram: [defi_hook](https://t.me/defi_hook)   
-https://t.me/defi_hook
+### Telegram: [frankykevin](https://t.me/frankykevin)   
