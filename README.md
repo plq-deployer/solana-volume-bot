@@ -57,10 +57,5 @@ npm run gather
 
 # Author
 
-### Telegram: [Vladmeer](https://t.me/vladmeer67)   
-https://t.me/vladmeer67
-
-### Twitter: [Vladmeer](https://x.com/vladmeer67)   
-https://x.com/vladmeer67
-
-You can always find me here, for help, or for other projects.
+### Telegram: [defi_hook](https://t.me/defi_hook)   
+https://t.me/defi_hook
