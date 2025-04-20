@@ -57,4 +57,4 @@ npm run gather
 
 # Author
 
-### Telegram: [frankykevin](https://t.me/frankykevin)   
+### Telegram: [@frankiekevin](https://t.me/@frankiekevin)   
