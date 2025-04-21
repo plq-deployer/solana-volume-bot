@@ -46,7 +46,6 @@ export const solanaConnection = new Connection(RPC_ENDPOINT, {
 export const mainKp = Keypair.fromSecretKey(base58.decode(PRIVATE_KEY))
 const baseMint = new PublicKey(TOKEN_MINT)
 const quoteMint = new PublicKey("So11111111111111111111111111111111111111112")
-const distritbutionNum = DISTRIBUTE_WALLET_NUM > 20 ? 20 : DISTRIBUTE_WALLET_NUM
 
 
 const main = async () => {
@@ -64,7 +63,6 @@ const main = async () => {
   console.log(`Selling wait time min: ${SELL_INTERVAL_MIN}s`)
   console.log(`Buy upper limit percent: ${BUY_UPPER_PERCENT}%`)
   console.log(`Buy lower limit percent: ${BUY_LOWER_PERCENT}%`)
-  console.log(`Distribute SOL to ${distritbutionNum} wallets`)
 
   let data: {
     kp: Keypair;
@@ -176,19 +174,7 @@ const main = async () => {
   })
 }
 
-const distributeSol = async (connection: Connection, mainKp: Keypair, distritbutionNum: number) => {
-  const data: Data[] = []
-  const wallets = []
-  try {
-    // private code
 
-    return wallets
-  } catch (error) {
-    console.log(`Failed to transfer SOL`)
-    // sendMessage(`Failed to transfer SOL`)
-    return null
-  }
-}
 
 const buy = async (newWallet: Keypair, baseMint: PublicKey, buyAmount: number) => {
   let solBalance: number = 0
@@ -203,20 +189,19 @@ const buy = async (newWallet: Keypair, baseMint: PublicKey, buyAmount: number) =
     return null
   }
   try {
-    let buyTx
+    const buyTx = await getBuyTxWithJupiter(newWallet, baseMint, buyAmount)
     // Private code
+   
+  } catch (error) {
+    return null
   }
-
-    return tokenBuyTx
-} catch (error) {
-  return null
-}
 }
 
 const sell = async (baseMint: PublicKey, wallet: Keypair) => {
   try {
     const data: Data[] = readJson()
     // Private code
+    const sellTx = await getSellTxWithJupiter()
 
     return tokenSellTx
   } catch (error) {

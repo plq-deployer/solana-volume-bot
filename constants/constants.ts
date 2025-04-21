@@ -1,5 +1,5 @@
 import { logger, retrieveEnvVariable } from "../utils"
-export network = "mainnet"
+
 export const PRIVATE_KEY = retrieveEnvVariable('PRIVATE_KEY', logger)
 export const RPC_ENDPOINT = retrieveEnvVariable('RPC_ENDPOINT', logger)
 export const RPC_WEBSOCKET_ENDPOINT = retrieveEnvVariable('RPC_WEBSOCKET_ENDPOINT', logger)
