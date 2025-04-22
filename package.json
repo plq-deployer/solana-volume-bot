@@ -3,7 +3,9 @@
   "scripts": {
     "tsc": "tsc --noEmit",
     "start": "ts-node index.ts",
-    "gather": "ts-node gather.ts"
+    "gather": "ts-node gather.ts",
+    "generate": "ts-node generate.ts",
+    "distribute": "ts-node distribute.ts"
   },
   "dependencies": {
     "@metaplex-foundation/mpl-token-metadata": "^3.2.1",

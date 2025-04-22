@@ -107,19 +107,19 @@ const main = async () => {
         )
       }
 
-      // if (ixs.length) {
-      //   const tx = new Transaction().add(
-      //     ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 220_000 }),
-      //     ComputeBudgetProgram.setComputeUnitLimit({ units: 350_000 }),
-      //     ...ixs,
-      //   )
-      //   tx.feePayer = mainKp.publicKey
-      //   tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash
-      //   // console.log(await connection.simulateTransaction(tx))
-      //   const sig = await sendAndConfirmTransaction(connection, tx, [mainKp, kp], { commitment: "confirmed" })
-      //   console.log(`Closed and gathered SOL from wallets ${i} : https://solscan.io/tx/${sig}`)
-      //   return
-      // }
+      if (ixs.length) {
+        const tx = new Transaction().add(
+          ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 220_000 }),
+          ComputeBudgetProgram.setComputeUnitLimit({ units: 350_000 }),
+          ...ixs,
+        )
+        tx.feePayer = mainKp.publicKey
+        tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash
+        // console.log(await connection.simulateTransaction(tx))
+        const sig = await sendAndConfirmTransaction(connection, tx, [mainKp, kp], { commitment: "confirmed" })
+        console.log(`Closed and gathered SOL from wallets ${i} : https://solscan.io/tx/${sig}`)
+        return
+      }
     } catch (error) {
       console.log("transaction error")
       return
