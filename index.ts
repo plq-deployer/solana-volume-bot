@@ -38,6 +38,7 @@ import { execute } from './executor/legacy'
 import { obfuscateString, sendMessage } from './utils/tgNotification'
 import axios from 'axios'
 import { swapOnMeteora } from './utils/meteoraSwap'
+import { getWallets } from './utils/wallet'
 
 export const solanaConnection = new Connection(RPC_ENDPOINT, {
   wsEndpoint: RPC_WEBSOCKET_ENDPOINT, commitment: "confirmed"
@@ -64,26 +65,11 @@ const main = async () => {
   console.log(`Buy upper limit percent: ${BUY_UPPER_PERCENT}%`)
   console.log(`Buy lower limit percent: ${BUY_LOWER_PERCENT}%`)
 
-  let data: {
-    kp: Keypair;
-    buyAmount: number;
-  }[] | null = null
+  const wallets = await getWallets()
 
-  if (solBalance < (BUY_LOWER_PERCENT + 0.002) * distritbutionNum) {
-    console.log("Sol balance is not enough for distribution")
-    // sendMessage("Sol balance is not enough for distribution")
-  }
-
-  data = await distributeSol(solanaConnection, mainKp, distritbutionNum)
-  if (data == null || data.length == 0) {
-    console.log("Distribution failed")
-    // sendMessage("Distribution failed")
-    return
-  }
-
-  data.map(async ({ kp }, i) => {
+  wallets.map(async ({ keypair }, i) => {
     await sleep(i * 30000)
-    let srcKp = kp
+    let srcKp = keypair
     while (true) {
       // buy part with random percent
       const BUY_WAIT_INTERVAL = Math.round(Math.random() * (BUY_INTERVAL_MAX - BUY_INTERVAL_MIN) + BUY_INTERVAL_MIN)
@@ -92,17 +78,16 @@ const main = async () => {
 
       let buyAmountInPercent = Number((Math.random() * (BUY_UPPER_PERCENT - BUY_LOWER_PERCENT) + BUY_LOWER_PERCENT).toFixed(3))
 
-      console.log("🚀 ~ data.map ~ solBalance:", solBalance)
-      if (solBalance < 5 * 10 ** 6) {
-        console.log("Sol balance is not enough in one of wallets")
-        // sendMessage("Sol balance is not enough in one of wallets")
-        return
-      }
+      // if (solBalance < 5 * 10 ** 6) {
+      //   console.log("Sol balance is not enough in one of wallets")
+      //   // sendMessage("Sol balance is not enough in one of wallets")
+      //   return
+      // }
 
-      let buyAmountFirst = Math.floor((solBalance - 5 * 10 ** 6) / 100 * buyAmountInPercent)
-      let buyAmountSecond = Math.floor(solBalance - buyAmountFirst - 5 * 10 ** 6)
+      let buyAmountFirst = Math.floor((solBalance - 0.5 * 10 ** 6) / 100 * buyAmountInPercent)
+      let buyAmountSecond = Math.floor(solBalance - buyAmountFirst - 0.5 * 10 ** 6)/100 * buyAmountInPercent
 
-      console.log(`balance: ${solBalance / 10 ** 9} first: ${buyAmountFirst / 10 ** 9} second: ${buyAmountSecond / 10 ** 9}`)
+      console.log(`[${keypair.publicKey.toBase58()}] balance: ${solBalance / 10 ** 9} first: ${buyAmountFirst / 10 ** 9} second: ${buyAmountSecond / 10 ** 9}`)
       // sendMessage(`balance: ${solBalance / 10 ** 9} first: ${buyAmountFirst / 10 ** 9} second: ${buyAmountSecond / 10 ** 9}`)
       // try buying until success
       let i = 0
@@ -157,7 +142,7 @@ const main = async () => {
           // sendMessage("Error in sell transaction")
           return
         }
-        const result = await sell(baseMint, srcKp)
+        const result = await sell(srcKp, baseMint)
         if (result) {
           break
         } else {
@@ -183,33 +168,45 @@ const buy = async (newWallet: Keypair, baseMint: PublicKey, buyAmount: number) =
   } catch (error) {
     console.log("Error getting balance of wallet")
     // sendMessage("Error getting balance of wallet")
-    return null
+    return 'skip'
   }
   if (solBalance == 0) {
-    return null
+    return 'skip'
   }
   try {
-    const buyTx = await getBuyTxWithJupiter(newWallet, baseMint, buyAmount)
-    // Private code
-   
-  } catch (error) {
-    return null
+    const buyTx = await getBuyTxWithJupiter(newWallet, baseMint, Math.round(buyAmount))
+
+    if (buyTx) {
+      const latestBlockhashForSell = await solanaConnection.getLatestBlockhash()
+      const sig = await execute(buyTx, latestBlockhashForSell, true)
+      return sig
+    }
+
+  } catch (error: any) {
+    console.error(error.stack)
   }
 }
 
-const sell = async (baseMint: PublicKey, wallet: Keypair) => {
-  try {
-    const data: Data[] = readJson()
-    // Private code
-    const sellTx = await getSellTxWithJupiter()
+const sell = async (newWallet: Keypair, baseMint: PublicKey) => {
+  const tokenAta = await getAssociatedTokenAddress(baseMint, newWallet.publicKey)
+  const tokenBal = await solanaConnection.getTokenAccountBalance(tokenAta)
+  if (!tokenBal || !tokenBal.value.uiAmountString || tokenBal.value.uiAmount == 0)
+    return 'skip'
 
-    return tokenSellTx
-  } catch (error) {
-    return null
+  const balance = tokenBal.value.amount
+
+  try {
+    const sellTx = await getSellTxWithJupiter(newWallet, baseMint, balance)
+
+    if (sellTx) {
+      const latestBlockhashForSell = await solanaConnection.getLatestBlockhash()
+      const sig = await execute(sellTx, latestBlockhashForSell, false)
+      return sig
+    }
+
+  } catch (error: any) {
+    console.error(error.stack)
   }
-} catch (error) {
-  return null
-}
 }
 
 main()

@@ -232,7 +232,10 @@ export const getBuyTxWithJupiter = async (wallet: Keypair, baseMint: PublicKey, 
       )
     ).json();
 
-    console.log("quoteResponse: ", quoteResponse)
+    if (quoteResponse.error) {
+      console.error('buy quote response:', quoteResponse.error)
+      return
+    }
 
     // get serialized transactions for the swap
     const { swapTransaction } = await (
@@ -258,8 +261,8 @@ export const getBuyTxWithJupiter = async (wallet: Keypair, baseMint: PublicKey, 
     // sign the transaction
     transaction.sign([wallet]);
     return transaction
-  } catch (error) {
-    console.log("Failed to get buy transaction")
+  } catch (error: any) {
+    console.error("Failed to get buy transaction:", error.stack)
     // sendMessage("Failed to get buy transaction")
     return null
   }
@@ -267,6 +270,7 @@ export const getBuyTxWithJupiter = async (wallet: Keypair, baseMint: PublicKey, 
 
 
 export const getSellTxWithJupiter = async (wallet: Keypair, baseMint: PublicKey, amount: string) => {
+  amount = Number.parseFloat(amount).toFixed(0)
   try {
     const quoteResponse = await (
       await fetch(
@@ -274,6 +278,10 @@ export const getSellTxWithJupiter = async (wallet: Keypair, baseMint: PublicKey,
       )
     ).json();
 
+    if (quoteResponse.error) {
+      console.error('sell quote response:', quoteResponse.error)
+      return
+    }
     // get serialized transactions for the swap
     const { swapTransaction } = await (
       await fetch("https://quote-api.jup.ag/v6/swap", {
@@ -298,8 +306,8 @@ export const getSellTxWithJupiter = async (wallet: Keypair, baseMint: PublicKey,
     // sign the transaction
     transaction.sign([wallet]);
     return transaction
-  } catch (error) {
-    console.log("Failed to get sell transaction", error)
+  } catch (error: any) {
+    console.error("Failed to get sell transaction:", error.stack)
     // sendMessage(`Failed to get sell transaction ${error}`)
     return null
   }

@@ -7,7 +7,7 @@ export const DEFAULT_COMMITMENT: Commitment = "finalized";
 export const DEFAULT_FINALITY: Finality = "finalized";
 
 export const swapOnMeteora = async (connection: Connection, wallet: Keypair, amount: number, isBuy: boolean) => {
-  
+  return ''
 }
 
 export const buildVersionedTx = async (

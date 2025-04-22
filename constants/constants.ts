@@ -21,6 +21,7 @@ export const DISTRIBUTE_WALLET_NUM = Number(retrieveEnvVariable('DISTRIBUTE_WALL
 export const SLIPPAGE = Number(retrieveEnvVariable('SLIPPAGE', logger))
 
 export const TOKEN_MINT = retrieveEnvVariable('TOKEN_MINT', logger)
+export const MINT_DECIMALS = Number(retrieveEnvVariable('MINT_DECIMALS', logger))
 export const POOL_ID = retrieveEnvVariable('POOL_ID', logger)
 
 export const TOKEN_NAME = retrieveEnvVariable('TOKEN_NAME', logger)

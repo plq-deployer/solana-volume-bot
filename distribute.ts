@@ -8,8 +8,10 @@ import {
   LAMPORTS_PER_SOL,
 } from '@solana/web3.js';
 import * as fs from 'fs/promises';
-import { DISTRIBUTE_WALLET_NUM } from './constants';
+import { DISTRIBUTE_WALLET_NUM, PRIVATE_KEY, RPC_ENDPOINT } from './constants';
 import * as path from 'path';
+import bs58 from 'bs58';
+
 
 const WALLET_FILE = path.resolve(__dirname, 'wallets.json');
 const AMOUNT_PER_WALLET = 0.01;
@@ -55,8 +57,8 @@ const distributeSol = async (
 };
 
 async function main() {
-  const connection = new Connection('https://api.mainnet-beta.solana.com'); // or testnet/devnet
-  const secret = Uint8Array.from([]); // fill with your main wallet's secret key
+  const connection = new Connection(RPC_ENDPOINT); // or testnet/devnet
+  const secret = bs58.decode(PRIVATE_KEY); // fill with your main wallet's secret key
   const mainKp = Keypair.fromSecretKey(secret);
 
   console.log(`Distribute SOL to ${distritbutionNum} wallets`);

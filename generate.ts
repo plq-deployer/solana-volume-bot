@@ -1,6 +1,8 @@
 import { Keypair } from '@solana/web3.js';
 import * as fs from 'fs/promises';
 import * as path from 'path';
+import bs58 from 'bs58';
+import { DISTRIBUTE_WALLET_NUM } from './constants';
 
 const WALLET_FILE = path.resolve(__dirname, 'wallets.json');
 
@@ -29,7 +31,7 @@ async function generateWallets(walletNum: number): Promise<void> {
 
     newWallets.push({
       public_key: wallet.publicKey.toBase58(),
-      private_key: Buffer.from(wallet.secretKey).toString('base64'), // Safer than printing raw array
+      private_key: bs58.encode(wallet.secretKey), // Safer than printing raw array
       balance: 0,
     });
   }
@@ -42,7 +44,7 @@ async function generateWallets(walletNum: number): Promise<void> {
 }
 
 async function main() {
-  const numWallets = 5; // Example: generate 5 wallets
+  const numWallets = DISTRIBUTE_WALLET_NUM; 
   await generateWallets(numWallets);
 }
 

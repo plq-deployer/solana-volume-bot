@@ -7,6 +7,7 @@ import { getSellTx, getSellTxWithJupiter } from "./utils/swapOnlyAmm";
 import { execute } from "./executor/legacy";
 import { POOL_ID, RPC_ENDPOINT, RPC_WEBSOCKET_ENDPOINT, SWAP_ROUTING } from "./constants";
 import { swapOnMeteora } from "./utils/meteoraSwap";
+import { getWallets } from "./utils/wallet";
 
 export const solanaConnection = new Connection(RPC_ENDPOINT, {
   wsEndpoint: RPC_WEBSOCKET_ENDPOINT, commitment: "processed"
@@ -20,10 +21,9 @@ const connection = new Connection(rpcUrl, { commitment: "processed" });
 const mainKp = Keypair.fromSecretKey(base58.decode(mainKpStr))
 
 const main = async () => {
-  const walletsData = readJson()
+  const walletsData = await getWallets()
 
-  const wallets = walletsData.map(({ privateKey }) => Keypair.fromSecretKey(base58.decode(privateKey)))
-  wallets.map(async (kp, i) => {
+  walletsData.map(async ({ keypair: kp }, i) => {
     try {
       await sleep(i * 1000)
       const accountInfo = await connection.getAccountInfo(kp.publicKey)
@@ -107,19 +107,19 @@ const main = async () => {
         )
       }
 
-      if (ixs.length) {
-        const tx = new Transaction().add(
-          ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 220_000 }),
-          ComputeBudgetProgram.setComputeUnitLimit({ units: 350_000 }),
-          ...ixs,
-        )
-        tx.feePayer = mainKp.publicKey
-        tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash
-        // console.log(await connection.simulateTransaction(tx))
-        const sig = await sendAndConfirmTransaction(connection, tx, [mainKp, kp], { commitment: "confirmed" })
-        console.log(`Closed and gathered SOL from wallets ${i} : https://solscan.io/tx/${sig}`)
-        return
-      }
+      // if (ixs.length) {
+      //   const tx = new Transaction().add(
+      //     ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 220_000 }),
+      //     ComputeBudgetProgram.setComputeUnitLimit({ units: 350_000 }),
+      //     ...ixs,
+      //   )
+      //   tx.feePayer = mainKp.publicKey
+      //   tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash
+      //   // console.log(await connection.simulateTransaction(tx))
+      //   const sig = await sendAndConfirmTransaction(connection, tx, [mainKp, kp], { commitment: "confirmed" })
+      //   console.log(`Closed and gathered SOL from wallets ${i} : https://solscan.io/tx/${sig}`)
+      //   return
+      // }
     } catch (error) {
       console.log("transaction error")
       return
