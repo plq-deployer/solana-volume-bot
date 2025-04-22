@@ -7,6 +7,7 @@ export const RPC_WEBSOCKET_ENDPOINT = retrieveEnvVariable('RPC_WEBSOCKET_ENDPOIN
 export const TX_FEE = Number(retrieveEnvVariable('TX_FEE', logger))
 export const SWAP_ROUTING = retrieveEnvVariable('SWAP_ROUTING', logger)
 
+export const DISTRIBUTE_AMOUNT_PER_WALLET = Number(retrieveEnvVariable('DISTRIBUTE_AMOUNT_PER_WALLET', logger))
 export const BUY_UPPER_PERCENT = Number(retrieveEnvVariable('BUY_UPPER_PERCENT', logger))
 export const BUY_LOWER_PERCENT = Number(retrieveEnvVariable('BUY_LOWER_PERCENT', logger))
 

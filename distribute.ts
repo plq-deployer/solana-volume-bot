@@ -8,13 +8,13 @@ import {
   LAMPORTS_PER_SOL,
 } from '@solana/web3.js';
 import * as fs from 'fs/promises';
-import { DISTRIBUTE_WALLET_NUM, PRIVATE_KEY, RPC_ENDPOINT } from './constants';
+import { DISTRIBUTE_AMOUNT_PER_WALLET, DISTRIBUTE_WALLET_NUM, PRIVATE_KEY, RPC_ENDPOINT } from './constants';
 import * as path from 'path';
 import bs58 from 'bs58';
 
 
 const WALLET_FILE = path.resolve(__dirname, 'wallets.json');
-const AMOUNT_PER_WALLET = 0.01;
+const AMOUNT_PER_WALLET = DISTRIBUTE_AMOUNT_PER_WALLET
 
 const distritbutionNum = DISTRIBUTE_WALLET_NUM > 20 ? 20 : DISTRIBUTE_WALLET_NUM;
 
@@ -25,7 +25,7 @@ const distributeSol = async (
 ): Promise<string[] | null> => {
   try {
     const fileData = await fs.readFile(WALLET_FILE, 'utf8');
-    const wallets: { public_key: string; private_key: string; balance: number }[] = JSON.parse(fileData);
+    const wallets: { public_key: string; private_key: string }[] = JSON.parse(fileData);
 
     const targets = wallets.slice(0, distributionNum);
 
@@ -42,8 +42,6 @@ const distributeSol = async (
       );
 
       await sendAndConfirmTransaction(connection, transaction, [mainKp]);
-
-      wallet.balance += AMOUNT_PER_WALLET;
     }
 
     // Save updated balances
