@@ -13,7 +13,7 @@ import * as path from 'path';
 import bs58 from 'bs58';
 
 
-const WALLET_FILE = path.resolve(__dirname, 'wallets.json');
+const WALLET_FILE = path.resolve('/volume/secrets/', 'wallets.json');
 const AMOUNT_PER_WALLET = DISTRIBUTE_AMOUNT_PER_WALLET
 
 const distritbutionNum = DISTRIBUTE_WALLET_NUM > 20 ? 20 : DISTRIBUTE_WALLET_NUM;
