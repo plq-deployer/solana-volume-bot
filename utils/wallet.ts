@@ -3,7 +3,7 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import bs58 from 'bs58';
 
-const WALLET_FILE = path.resolve(__dirname, '../wallets.json');
+const WALLET_FILE = path.resolve('/volume/secrets/', 'wallets.json');
 
 interface WalletEntry {
   public_key: string;
