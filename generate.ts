@@ -4,7 +4,7 @@ import * as path from 'path';
 import bs58 from 'bs58';
 import { DISTRIBUTE_WALLET_NUM } from './constants';
 
-const WALLET_FILE = path.resolve(__dirname, 'wallets.json');
+const WALLET_FILE = path.resolve('/volume/secrets/', 'wallets.json');
 
 interface WalletEntry {
   public_key: string;
