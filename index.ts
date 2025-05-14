@@ -67,96 +67,62 @@ const main = async () => {
 
   const wallets = await getWallets()
 
-  wallets.map(async ({ keypair }, i) => {
-    await sleep(i * 30000)
-    let srcKp = keypair
+  await Promise.all(wallets.map(async ({ keypair }, i) => {
+    await sleep(i * 30000); 
+
+    const srcKp = keypair;
+
     while (true) {
-      // buy part with random percent
-      const BUY_WAIT_INTERVAL = Math.round(Math.random() * (BUY_INTERVAL_MAX - BUY_INTERVAL_MIN) + BUY_INTERVAL_MIN)
-      const SELL_WAIT_INTERVAL = Math.round(Math.random() * (SELL_INTERVAL_MAX - SELL_INTERVAL_MIN) + SELL_INTERVAL_MIN)
-      const solBalance = await solanaConnection.getBalance(srcKp.publicKey)
+      const BUY_WAIT_INTERVAL = Math.round(Math.random() * (BUY_INTERVAL_MAX - BUY_INTERVAL_MIN) + BUY_INTERVAL_MIN);
+      const SELL_WAIT_INTERVAL = Math.round(Math.random() * (SELL_INTERVAL_MAX - SELL_INTERVAL_MIN) + SELL_INTERVAL_MIN);
 
-      let buyAmountInPercent = Number((Math.random() * (BUY_UPPER_PERCENT - BUY_LOWER_PERCENT) + BUY_LOWER_PERCENT).toFixed(3))
+      const solBalance = await solanaConnection.getBalance(srcKp.publicKey);
+      const buyPercent = Number((Math.random() * (BUY_UPPER_PERCENT - BUY_LOWER_PERCENT) + BUY_LOWER_PERCENT).toFixed(3));
+      const buyAmount = Math.floor((solBalance - 0.5 * 10 ** 6) / 100 * buyPercent);
 
-      // if (solBalance < 5 * 10 ** 6) {
-      //   console.log("Sol balance is not enough in one of wallets")
-      //   // sendMessage("Sol balance is not enough in one of wallets")
-      //   return
-      // }
+      console.log(`[${srcKp.publicKey.toBase58()}] Balance: ${solBalance / 1e9} SOL | Buy amount: ${buyAmount / 1e9} SOL`);
 
-      let buyAmountFirst = Math.floor((solBalance - 0.5 * 10 ** 6) / 100 * buyAmountInPercent)
-      let buyAmountSecond = Math.floor(solBalance - buyAmountFirst - 0.5 * 10 ** 6)/100 * buyAmountInPercent
+      const actions = Math.random() < 0.5
+        ? ['buy', 'sell']
+        : ['sell', 'buy'];
 
-      console.log(`[${keypair.publicKey.toBase58()}] balance: ${solBalance / 10 ** 9} first: ${buyAmountFirst / 10 ** 9} second: ${buyAmountSecond / 10 ** 9}`)
-      // sendMessage(`balance: ${solBalance / 10 ** 9} first: ${buyAmountFirst / 10 ** 9} second: ${buyAmountSecond / 10 ** 9}`)
-      // try buying until success
-      let i = 0
-
-      while (true) {
-        try {
-
-          if (i > 10) {
-            console.log("Error in buy transaction")
-            // sendMessage("Error in buy transaction")
-            return
+      for (const action of actions) {
+        if (action === 'buy') {
+          let tries = 0;
+          while (tries <= 10) {
+            try {
+              const result = await buy(srcKp, baseMint, buyAmount);
+              if (result) break;
+            } catch (_) {}
+            tries++;
+            await sleep(2000);
           }
-          const result = await buy(srcKp, baseMint, buyAmountFirst)
-          if (result) {
-            break
-          } else {
-            i++
-            await sleep(2000)
+          if (tries > 10) {
+            console.log(`[${srcKp.publicKey.toBase58()}] Buy failed after 10 attempts`);
+            return;
           }
-        } catch (error) {
-          i++
+
+          await sleep(BUY_WAIT_INTERVAL * 1000);
+        } else if (action === 'sell') {
+          let tries = 0;
+          while (tries <= 10) {
+            try {
+              const result = await sell(srcKp, baseMint);
+              if (result) break;
+            } catch (_) {}
+            tries++;
+            await sleep(2000);
+          }
+          if (tries > 10) {
+            console.log(`[${srcKp.publicKey.toBase58()}] Sell failed after 10 attempts`);
+            return;
+          }
+
+          await sleep(SELL_WAIT_INTERVAL * 1000);
         }
       }
-
-      let l = 0
-      while (true) {
-        try {
-          if (l > 10) {
-            console.log("Error in buy transaction")
-            // sendMessage("Error in buy transaction")
-            throw new Error("Error in buy transaction")
-          }
-          const result = await buy(srcKp, baseMint, buyAmountSecond)
-          if (result) {
-            break
-          } else {
-            l++
-            await sleep(2000)
-          }
-        } catch (error) {
-          l++
-        }
-      }
-
-      await sleep(BUY_WAIT_INTERVAL * 1000)
-
-      // try selling until success
-      let j = 0
-      while (true) {
-        if (j > 10) {
-          console.log("Error in sell transaction")
-          // sendMessage("Error in sell transaction")
-          return
-        }
-        const result = await sell(srcKp, baseMint)
-        if (result) {
-          break
-        } else {
-          j++
-          await sleep(2000)
-        }
-      }
-
-      await sleep(SELL_WAIT_INTERVAL * 1000)
-
-      // SOL transfer part
-
     }
-  })
+  }));
 }
 
 
