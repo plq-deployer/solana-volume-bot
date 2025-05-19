@@ -56,7 +56,7 @@ const distributeSol = async (
 
 async function main() {
   const connection = new Connection(RPC_ENDPOINT); // or testnet/devnet
-  const secret = bs58.decode(PRIVATE_KEY); // fill with your main wallet's secret key
+  const secret = bs58.decode(PRIVATE_KEY.split(",")[0]); // fill with your main wallet's secret key
   const mainKp = Keypair.fromSecretKey(secret);
 
   console.log(`Distribute SOL to ${distritbutionNum} wallets`);
