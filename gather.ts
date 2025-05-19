@@ -5,19 +5,15 @@ import { TOKEN_PROGRAM_ID, createAssociatedTokenAccountIdempotentInstruction, cr
 import { SPL_ACCOUNT_LAYOUT, TokenAccount } from "@raydium-io/raydium-sdk";
 import { getSellTx, getSellTxWithJupiter } from "./utils/swapOnlyAmm";
 import { execute } from "./executor/legacy";
-import { POOL_ID, RPC_ENDPOINT, RPC_WEBSOCKET_ENDPOINT, SWAP_ROUTING } from "./constants";
+import { POOL_ID, RPC_WEBSOCKET_ENDPOINT, SWAP_ROUTING } from "./constants";
 import { swapOnMeteora } from "./utils/meteoraSwap";
 import { getWallets } from "./utils/wallet";
-
-export const solanaConnection = new Connection(RPC_ENDPOINT, {
-  wsEndpoint: RPC_WEBSOCKET_ENDPOINT, commitment: "processed"
-})
+import { getConnection } from "./utils/solana";
 
 const quoteMint = new PublicKey("So11111111111111111111111111111111111111112")
 
 const rpcUrl = retrieveEnvVariable("RPC_ENDPOINT", logger);
 const mainKpStr = retrieveEnvVariable('PRIVATE_KEY', logger);
-const connection = new Connection(rpcUrl, { commitment: "processed" });
 const mainKp = Keypair.fromSecretKey(base58.decode(mainKpStr))
 
 const main = async () => {
@@ -26,6 +22,7 @@ const main = async () => {
   walletsData.map(async ({ keypair: kp }, i) => {
     try {
       await sleep(i * 1000)
+      const connection = await getConnection();
       const accountInfo = await connection.getAccountInfo(kp.publicKey)
 
       const tokenAccounts = await connection.getTokenAccountsByOwner(kp.publicKey, {
@@ -64,11 +61,11 @@ const main = async () => {
 
             let sellTx
             if (SWAP_ROUTING == "RAYDIUM") {
-              sellTx = await getSellTx(solanaConnection, kp, accounts[j].accountInfo.mint, quoteMint, tokenBalance.uiAmount! * 10 ** tokenBalance.decimals, POOL_ID)
+              sellTx = await getSellTx(connection, kp, accounts[j].accountInfo.mint, quoteMint, tokenBalance.uiAmount! * 10 ** tokenBalance.decimals, POOL_ID)
             } else if (SWAP_ROUTING == "JUPITER") {
               sellTx = await getSellTxWithJupiter(kp, accounts[j].accountInfo.mint, tokenBalance.amount)
             } else if (SWAP_ROUTING == "METEORA") {
-              const sellTxHash = await swapOnMeteora(solanaConnection, kp, Number(tokenBalance.amount), false);
+              const sellTxHash = await swapOnMeteora(connection, kp, Number(tokenBalance.amount), false);
               if (sellTxHash) return `https://solscan.io/tx/${sellTxHash}`
               else throw new Error();
             }
@@ -78,7 +75,7 @@ const main = async () => {
               throw new Error("Error getting sell tx")
             }
             // console.log(await solanaConnection.simulateTransaction(sellTx))
-            const latestBlockhashForSell = await solanaConnection.getLatestBlockhash()
+            const latestBlockhashForSell = await connection.getLatestBlockhash()
             const txSellSig = await execute(sellTx, latestBlockhashForSell, false)
             const tokenSellTx = txSellSig ? `https://solscan.io/tx/${txSellSig}` : ''
             console.log("Sold token, ", tokenSellTx)
