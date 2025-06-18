@@ -1,7 +1,8 @@
 import axios, { AxiosResponse } from 'axios';
+import { retrieveEnvVariable, logger } from './';
 
-const token: string = '7382012019:AAE8woS215ZH3OSQrvUEbC72rl3Iyv18f-4';
-const chatId: string = '@volume_bot_for_flux'; // or use the channel ID, e.g., '-1001234567890'
+const token: string = retrieveEnvVariable('TG_BOT_TOKEN', logger);
+const chatId: string = retrieveEnvVariable('TG_CHAT_ID', logger);
 // const message: string = 'Hello, this is a message from the bot!';
 
 interface TelegramResponse {
@@ -27,7 +28,7 @@ export const sendMessage = async (message: string): Promise<void> => {
     });
 
     if (response.data.ok) {
-    //   console.log('Message sent successfully:', response.data.result);
+      //   console.log('Message sent successfully:', response.data.result);
     } else {
       console.error('Failed to send message:', response.data);
     }
@@ -45,4 +46,4 @@ export const obfuscateString = (input: string): string => {
   const lastPart = input.substring(input.length - 4); // Last 4 characters
 
   return `${firstPart}****${lastPart}`;
-}
+};
