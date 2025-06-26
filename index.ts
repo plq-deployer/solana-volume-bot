@@ -42,6 +42,18 @@ export const mainKp = Keypair.fromSecretKey(base58.decode(PRIVATE_KEY));
 const baseMint = new PublicKey(TOKEN_MINT);
 const quoteMint = new PublicKey('So11111111111111111111111111111111111111112');
 
+const isInsufficientBalance = (error: any): boolean => {
+  if (typeof error === 'object' && error !== null) {
+    const errorMessage = error.message || error.toString();
+    return (
+      errorMessage.toLowerCase().includes('insufficient balance') ||
+      errorMessage.toLowerCase().includes('insufficient funds') ||
+      errorMessage.toLowerCase().includes('0x1')
+    );
+  }
+  return false;
+};
+
 const main = async () => {
   // curSolPrice = await getSolPrice();
 
@@ -66,14 +78,38 @@ const main = async () => {
 
       const srcKp = keypair;
 
+      const checkWalletBalance = async () => {
+        const solanaConnection = await getConnection();
+        const solBalance = await solanaConnection.getBalance(srcKp.publicKey);
+        return solBalance >= 0.05 * LAMPORTS_PER_SOL;
+      };
+
+      let lastBalanceWarning = 0; // Track when we last sent a warning
+
       while (true) {
+        const solanaConnection = await getConnection();
+        const solBalance = await solanaConnection.getBalance(srcKp.publicKey);
+
+        // Check if balance is too low (less than 0.05 SOL)
+        if (solBalance < 0.05 * LAMPORTS_PER_SOL) {
+          // Only send warning message once per hour per wallet
+          const now = Date.now();
+          if (now - lastBalanceWarning > 3600000) {
+            // 1 hour in milliseconds
+            const message = `⚠️ Low SOL balance warning!\nWallet: ${srcKp.publicKey.toBase58()}\nBalance: ${(solBalance / LAMPORTS_PER_SOL).toFixed(4)} SOL`;
+            await sendMessage(message);
+            lastBalanceWarning = now;
+          }
+          console.log(`[${srcKp.publicKey.toBase58()}] Low SOL balance, skipping this cycle`);
+          await sleep(60000); // Sleep for 1 minute before checking again
+          continue;
+        }
+
         const BUY_WAIT_INTERVAL = Math.round(Math.random() * (BUY_INTERVAL_MAX - BUY_INTERVAL_MIN) + BUY_INTERVAL_MIN);
         const SELL_WAIT_INTERVAL = Math.round(
           Math.random() * (SELL_INTERVAL_MAX - SELL_INTERVAL_MIN) + SELL_INTERVAL_MIN,
         );
 
-        const solanaConnection = await getConnection();
-        const solBalance = await solanaConnection.getBalance(srcKp.publicKey);
         const buyPercent = Number(
           (Math.random() * (BUY_UPPER_PERCENT - BUY_LOWER_PERCENT) + BUY_LOWER_PERCENT).toFixed(3),
         );
@@ -90,9 +126,19 @@ const main = async () => {
             let tries = 0;
             while (tries <= 10) {
               try {
+                const hasEnoughBalance = await checkWalletBalance();
+                if (!hasEnoughBalance) {
+                  console.log(`[${srcKp.publicKey.toBase58()}] Insufficient balance for buy transaction`);
+                  break;
+                }
                 const result = await buy(srcKp, baseMint, buyAmount);
                 if (result) break;
-              } catch (_) {}
+              } catch (error) {
+                if (isInsufficientBalance(error)) {
+                  console.log(`[${srcKp.publicKey.toBase58()}] Insufficient balance for buy transaction`);
+                  break;
+                }
+              }
               tries++;
               await sleep(2000);
             }
@@ -106,9 +152,19 @@ const main = async () => {
             let tries = 0;
             while (tries <= 10) {
               try {
+                const hasEnoughBalance = await checkWalletBalance();
+                if (!hasEnoughBalance) {
+                  console.log(`[${srcKp.publicKey.toBase58()}] Insufficient balance for sell transaction`);
+                  break;
+                }
                 const result = await sell(srcKp, baseMint);
                 if (result) break;
-              } catch (_) {}
+              } catch (error) {
+                if (isInsufficientBalance(error)) {
+                  console.log(`[${srcKp.publicKey.toBase58()}] Insufficient balance for sell transaction`);
+                  break;
+                }
+              }
               tries++;
               await sleep(2000);
             }
@@ -132,12 +188,15 @@ const buy = async (newWallet: Keypair, baseMint: PublicKey, buyAmount: number) =
     solBalance = await solanaConnection.getBalance(newWallet.publicKey);
   } catch (error) {
     console.log('Error getting balance of wallet');
-    // sendMessage("Error getting balance of wallet")
+    await sendMessage(`❌ Error getting balance of wallet: ${newWallet.publicKey.toBase58()}`);
     return 'skip';
   }
-  if (solBalance == 0) {
+
+  if (solBalance < 0.05 * LAMPORTS_PER_SOL) {
+    console.log(`[${newWallet.publicKey.toBase58()}] Insufficient balance for transaction`);
     return 'skip';
   }
+
   try {
     const buyTx = await getBuyTxWithJupiter(newWallet, baseMint, Math.round(buyAmount));
 
@@ -149,6 +208,10 @@ const buy = async (newWallet: Keypair, baseMint: PublicKey, buyAmount: number) =
     }
   } catch (error: any) {
     console.error(error.stack);
+    if (isInsufficientBalance(error)) {
+      const message = `❌ Transaction failed - Insufficient SOL for fees!\nWallet: ${newWallet.publicKey.toBase58()}\nError: ${error.message}`;
+      await sendMessage(message);
+    }
   }
 };
 
