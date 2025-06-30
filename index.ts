@@ -91,7 +91,7 @@ const main = async () => {
         const solBalance = await solanaConnection.getBalance(srcKp.publicKey);
 
         // Check if balance is too low (less than 0.05 SOL)
-        if (solBalance < 0.05 * LAMPORTS_PER_SOL) {
+        if (solBalance <= 0.01 * LAMPORTS_PER_SOL) {
           // Only send warning message once per hour per wallet
           const now = Date.now();
           if (now - lastBalanceWarning > 3600000) {
@@ -100,9 +100,9 @@ const main = async () => {
             await sendMessage(message);
             lastBalanceWarning = now;
           }
-          console.log(`[${srcKp.publicKey.toBase58()}] Low SOL balance, skipping this cycle`);
-          await sleep(60000); // Sleep for 1 minute before checking again
-          continue;
+          // console.log(`[${srcKp.publicKey.toBase58()}] Low SOL balance, skipping this cycle`);
+          // await sleep(60000); // Sleep for 1 minute before checking again
+          // continue;
         }
 
         const BUY_WAIT_INTERVAL = Math.round(Math.random() * (BUY_INTERVAL_MAX - BUY_INTERVAL_MIN) + BUY_INTERVAL_MIN);
