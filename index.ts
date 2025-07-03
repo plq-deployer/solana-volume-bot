@@ -81,7 +81,7 @@ const main = async () => {
       const checkWalletBalance = async () => {
         const solanaConnection = await getConnection();
         const solBalance = await solanaConnection.getBalance(srcKp.publicKey);
-        return solBalance >= 0.05 * LAMPORTS_PER_SOL;
+        return solBalance >= 0.0001 * LAMPORTS_PER_SOL;
       };
 
       let lastBalanceWarning = 0; // Track when we last sent a warning
