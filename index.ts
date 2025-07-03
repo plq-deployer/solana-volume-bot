@@ -192,7 +192,7 @@ const buy = async (newWallet: Keypair, baseMint: PublicKey, buyAmount: number) =
     return 'skip';
   }
 
-  if (solBalance < 0.05 * LAMPORTS_PER_SOL) {
+  if (solBalance < 0.0001 * LAMPORTS_PER_SOL) {
     console.log(`[${newWallet.publicKey.toBase58()}] Insufficient balance for transaction`);
     return 'skip';
   }
